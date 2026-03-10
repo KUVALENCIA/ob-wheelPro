@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>OB Wheel Pro</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3498db">
+    <link rel="apple-touch-icon" href="icon.svg">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="OB Wheel">
+    
+    <style>
+        /* --- VARIABLES DE COLOR --- */
+        :root {
+            --bg-body: #f0f4f8; --bg-card: #ffffff; --text-main: #2c3e50; --text-muted: #7f8c8d;
+            --bg-input: #ffffff; --border-input: #ddd; --bg-tab: #eee; --bg-clave: #f9f9f9;
+            --border-clave: #eee; --text-input: #333;
+        }
+
+        body.dark-mode {
+            --bg-body: #121212; --bg-card: #1e1e24; --text-main: #f5f6fa; --text-muted: #a4b0be;
+            --bg-input: #2d3436; --border-input: #4b6584; --bg-tab: #2d3436; --bg-clave: #2d3436;
+            --border-clave: #4b6584; --text-input: #f5f6fa;
+        }
+
+        /* --- ESTILOS GENERALES --- */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: var(--bg-body); color: var(--text-main); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; padding: 20px; transition: background-color 0.3s, color 0.3s; }
+        .card { background-color: var(--bg-card); padding: 2rem; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; text-align: center; border: 1px solid transparent; transition: background-color 0.3s; position: relative; }
+        
+        .btn-theme { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-main); }
+        h2 { color: var(--text-main); margin-top: 0; }
+        
+        .tabs { display: flex; justify-content: center; margin-bottom: 1.5rem; background: var(--bg-tab); padding: 5px; border-radius: 10px; gap: 5px; }
+        .tab-label { flex: 1; padding: 8px 5px; cursor: pointer; text-align: center; border-radius: 8px; font-weight: bold; color: var(--text-muted); transition: 0.3s; font-size: 0.9rem; }
+        input[type="radio"] { display: none; }
+        input[type="radio"]:checked + .tab-label { background-color: var(--bg-card); color: #3498db; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        
+        .input-group { margin-bottom: 1.5rem; text-align: left; }
+        label { display: block; margin-bottom: 0.5rem; color: var(--text-muted); font-weight: bold; }
+        input[type="date"], input[type="number"] { width: 100%; padding: 12px; border: 2px solid var(--border-input); border-radius: 8px; font-size: 1rem; box-sizing: border-box; background-color: var(--bg-input); color: var(--text-input); color-scheme: light dark; }
+        .row-inputs { display: flex; gap: 10px; } .col { flex: 1; }
+        
+        .action-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        .btn-calc { flex: 2; background-color: #3498db; color: white; border: none; padding: 14px 24px; font-size: 1.1rem; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-reset { flex: 1; background-color: #e74c3c; color: white; border: none; padding: 14px 10px; font-size: 1rem; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        
+        #resultado { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-clave); display: none; text-align: left; }
+        
+        .dato-clave { background-color: var(--bg-clave); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #3498db; }
+        .dato-fpp { border-left-color: #e74c3c; } .dato-eco { border-left-color: #9b59b6; } .dato-hitos { border-left-color: #f39c12; } .dato-machine { border-left-color: #27ae60; }
+        .dato-clave h3 { margin: 0; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; }
+        .dato-clave p { margin: 5px 0 0 0; font-size: 1.2rem; color: var(--text-main); font-weight: bold; }
+        
+        .hitos-list { list-style: none; padding: 0; margin: 10px 0 0 0; }
+        .hitos-list li { margin-bottom: 8px; font-size: 0.95rem; color: var(--text-main); padding-bottom: 8px; border-bottom: 1px dashed var(--border-clave); }
+        .hitos-list li:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+        .hitos-list span.rango-fecha { display: block; font-weight: bold; color: #3498db; font-size: 1.05rem; }
+
+        .progress-container { margin-bottom: 20px; text-align: center; }
+        .progress-bg { background-color: var(--bg-tab); border-radius: 20px; height: 25px; width: 100%; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, #3498db, #2ecc71); height: 100%; width: 0%; border-radius: 20px; transition: width 1s ease-in-out; }
+        .progress-text { margin-top: 5px; font-size: 0.9rem; color: var(--text-muted); font-weight: bold; }
+        
+        .time-machine-container { margin-top: 20px; padding-top: 20px; border-top: 2px dashed var(--border-clave); }
+        .machine-controls { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; margin-top: 10px;}
+        .input-mini { width: 70px !important; padding: 8px !important; text-align: center; }
+        .label-mini { font-size: 0.9rem; color: var(--text-muted); margin-right: 10px; }
+        .btn-mini { background-color: #27ae60; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-left: auto; }
+        .machine-result { margin-top: 15px; font-size: 1.1rem; color: #27ae60; font-weight: bold; text-align: center; background: var(--bg-clave); padding: 10px; border-radius: 8px; display: none; }
+        
+        /* BOTONES DE COMPARTIR E IMPRIMIR */
+        .share-buttons { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+        .btn-print { flex: 1; background-color: #95a5a6; color: white; border: none; padding: 12px 10px; font-size: 1rem; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 140px; }
+        .btn-whatsapp { flex: 1; background-color: #25D366; color: white; border: none; padding: 12px 10px; font-size: 1rem; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 140px; }
+        .btn-whatsapp:hover { background-color: #128C7E; }
+
+        .print-header { display: none; }
+        
+        @media print {
+            body { background-color: white; color: black; padding: 0; }
+            .card { box-shadow: none; border: 1px solid #ccc; max-width: 100%; padding: 0; background: white; }
+            .no-print, .btn-theme { display: none !important; }
+            .print-header { display: block !important; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+            #resultado { display: block !important; border-top: none; }
+            .dato-clave { border: 1px solid #eee; background: white; color: black; }
+            .dato-clave p, .hitos-list li { color: black; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <button class="btn-theme no-print" onclick="toggleTema()" id="btn-tema">🌙</button>
+
+        <div class="print-header"><h1>Reporte Obstétrico</h1></div>
+        <h2 class="no-print">Calculadora Obstétrica</h2>
+        
+        <div class="tabs no-print">
+            <input type="radio" id="tab-fum" name="metodo" checked onclick="toggleInput('fum')">
+            <label for="tab-fum" class="tab-label">FUM</label>
+            <input type="radio" id="tab-eco-fpp" name="metodo" onclick="toggleInput('fpp')">
+            <label for="tab-eco-fpp" class="tab-label">FPP (Eco)</label>
+            <input type="radio" id="tab-eco-prev" name="metodo" onclick="toggleInput('prev')">
+            <label for="tab-eco-prev" class="tab-label">Eco Previo</label>
+        </div>
+
+        <div id="grupo-fum" class="input-group">
+            <label for="fum">Fecha de Última Menstruación:</label>
+            <input type="date" id="fum">
+        </div>
+
+        <div id="grupo-fpp" class="input-group" style="display: none;">
+            <label for="fpp-eco">Fecha Probable de Parto (según Eco):</label>
+            <input type="date" id="fpp-eco">
+        </div>
+
+        <div id="grupo-prev" class="input-group" style="display: none;">
+            <label>Datos del Ultrasonido Previo:</label>
+            <label style="font-size: 0.85rem; font-weight: normal; margin-bottom: 5px;">Fecha del estudio:</label>
+            <input type="date" id="fecha-eco-prev" style="margin-bottom: 10px;">
+            <label style="font-size: 0.85rem; font-weight: normal; margin-bottom: 5px;">Edad gestacional en ese eco:</label>
+            <div class="row-inputs">
+                <div class="col"><input type="number" id="eco-sem" placeholder="Sem" min="1" max="42"></div>
+                <div class="col"><input type="number" id="eco-dias" placeholder="Días" min="0" max="6"></div>
+            </div>
+        </div>
+
+        <div class="action-buttons no-print">
+            <button class="btn-calc" onclick="calcularEmbarazo()">Calcular Datos</button>
+            <button class="btn-reset" onclick="reiniciarCalculadora()">↻ Limpiar</button>
+        </div>
+
+        <div id="resultado">
+            <div class="dato-clave print-only" style="border-left-color: #333;">
+                <h3>Base del Cálculo</h3><p id="metodo-usado-print">--</p>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bg"><div id="barra-visual" class="progress-fill"></div></div>
+                <div id="barra-texto" class="progress-text">0% Completado</div>
+            </div>
+            
+            <div class="dato-clave dato-fpp">
+                <h3>Fecha Probable de Parto (FPP)</h3><p id="fpp-texto">--/--/----</p>
+            </div>
+            
+            <div class="dato-clave">
+                <h3>Edad Gestacional Actual</h3><p id="edad-texto">0 Semanas + 0 Días</p>
+            </div>
+
+            <div class="dato-clave dato-hitos">
+                <h3>📅 Cronograma de Estudios</h3>
+                <ul id="lista-hitos" class="hitos-list">
+                    </ul>
+            </div>
+
+            <div class="time-machine-container no-print">
+                <div class="dato-clave dato-machine">
+                    <h3>🔮 Máquina del Tiempo</h3>
+                    <p style="font-size: 0.9rem; font-weight: normal; margin-bottom: 5px;">Buscar fecha para:</p>
+                    <div class="machine-controls">
+                        <input type="number" id="tm-semanas" class="input-mini" placeholder="Sem" min="1" max="42">
+                        <span class="label-mini">Sem</span>
+                        <input type="number" id="tm-dias" class="input-mini" placeholder="Días" min="0" max="6" value="0">
+                        <span class="label-mini">Días</span>
+                        <button onclick="calcularTimeMachine()" class="btn-mini">Ver Fecha</button>
+                    </div>
+                    <div id="resultado-maquina" class="machine-result"></div>
+                </div>
+            </div>
+
+            <div class="share-buttons no-print">
+                <button onclick="window.print()" class="btn-print">🖨️ Imprimir</button>
+                <button onclick="enviarWhatsApp()" class="btn-whatsapp">💬 Enviar WhatsApp</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // MODO OSCURO
+        function inicializarTema() {
+            const temaGuardado = localStorage.getItem('temaObWheel');
+            if (temaGuardado === 'oscuro') {
+                document.body.classList.add('dark-mode');
+                document.getElementById('btn-tema').innerText = '☀️';
+            }
+        }
+        function toggleTema() {
+            document.body.classList.toggle('dark-mode');
+            const esOscuro = document.body.classList.contains('dark-mode');
+            document.getElementById('btn-tema').innerText = esOscuro ? '☀️' : '🌙';
+            localStorage.setItem('temaObWheel', esOscuro ? 'oscuro' : 'claro');
+        }
+        inicializarTema();
+
+        let fechaInicioGlobal = null;
+
+        function toggleInput(modo) {
+            document.getElementById('grupo-fum').style.display = 'none';
+            document.getElementById('grupo-fpp').style.display = 'none';
+            document.getElementById('grupo-prev').style.display = 'none';
+            document.getElementById('resultado').style.display = 'none';
+            if (modo === 'fum') document.getElementById('grupo-fum').style.display = 'block';
+            if (modo === 'fpp') document.getElementById('grupo-fpp').style.display = 'block';
+            if (modo === 'prev') document.getElementById('grupo-prev').style.display = 'block';
+        }
+
+        function formatearRango(inicio, fin) {
+            const opts = { day: 'numeric', month: 'short' };
+            return `<span class="rango-fecha">${inicio.toLocaleDateString('es-ES', opts)} al ${fin.toLocaleDateString('es-ES', opts)}</span>`;
+        }
+        
+        // Formateador sin etiquetas HTML para WhatsApp
+        function formatearRangoTexto(inicio, fin) {
+            const opts = { day: 'numeric', month: 'short' };
+            return `${inicio.toLocaleDateString('es-ES', opts)} al ${fin.toLocaleDateString('es-ES', opts)}`;
+        }
+
+        // Variables globales para guardar textos limpios para WhatsApp
+        let hitosTextoWhatsApp = "";
+
+        function calcularEmbarazo() {
+            const tabFum = document.getElementById('tab-fum').checked;
+            const tabFpp = document.getElementById('tab-eco-fpp').checked;
+            const tabPrev = document.getElementById('tab-eco-prev').checked;
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            let fppCalculada, fechaInicio;
+            let textoMetodo = "";
+
+            if (tabFum) {
+                const inputVal = document.getElementById('fum').value;
+                if (!inputVal) return alert("Ingresa la FUM");
+                fechaInicio = new Date(inputVal + 'T00:00:00');
+                fppCalculada = new Date(fechaInicio);
+                fppCalculada.setDate(fechaInicio.getDate() + 280);
+                textoMetodo = "FUM: " + fechaInicio.toLocaleDateString();
+            } else if (tabFpp) {
+                const inputVal = document.getElementById('fpp-eco').value;
+                if (!inputVal) return alert("Ingresa la FPP");
+                fppCalculada = new Date(inputVal + 'T00:00:00');
+                fechaInicio = new Date(fppCalculada);
+                fechaInicio.setDate(fppCalculada.getDate() - 280);
+                textoMetodo = "FPP Eco: " + fppCalculada.toLocaleDateString();
+            } else if (tabPrev) {
+                const fechaEcoInput = document.getElementById('fecha-eco-prev').value;
+                const semInput = parseInt(document.getElementById('eco-sem').value);
+                const diasInput = parseInt(document.getElementById('eco-dias').value) || 0;
+                if (!fechaEcoInput || isNaN(semInput)) return alert("Ingresa fecha del estudio y las semanas.");
+                const fechaEco = new Date(fechaEcoInput + 'T00:00:00');
+                const diasDeEmbarazoAlEco = (semInput * 7) + diasInput;
+                fechaInicio = new Date(fechaEco);
+                fechaInicio.setDate(fechaEco.getDate() - diasDeEmbarazoAlEco);
+                fppCalculada = new Date(fechaInicio);
+                fppCalculada.setDate(fechaInicio.getDate() + 280);
+                textoMetodo = `Eco Previo (${fechaEco.toLocaleDateString()}): ${semInput}.${diasInput} sem`;
+            }
+
+            fechaInicioGlobal = new Date(fechaInicio);
+            const diferenciaTiempo = hoy - fechaInicio;
+            const diasTotales = Math.floor(diferenciaTiempo / (1000 * 60 * 60 * 24));
+            if (diasTotales < 0 && tabFum) return alert("La fecha es futura.");
+            
+            const semanas = Math.floor(diasTotales / 7);
+            const diasRestantes = diasTotales % 7;
+
+            let porcentaje = (diasTotales / 280) * 100;
+            if (porcentaje > 100) porcentaje = 100;
+            if (porcentaje < 0) porcentaje = 0;
+
+            const opts = { day: 'numeric', month: 'long', year: 'numeric' };
+            document.getElementById('metodo-usado-print').innerText = textoMetodo;
+            document.getElementById('fpp-texto').innerText = fppCalculada.toLocaleDateString('es-ES', opts);
+            document.getElementById('edad-texto').innerText = `${semanas} Semanas + ${diasRestantes} Días`;
+            
+            // Hitos
+            const ecoGenInicio = new Date(fechaInicio); ecoGenInicio.setDate(fechaInicio.getDate() + 77);
+            const ecoGenFin = new Date(fechaInicio); ecoGenFin.setDate(fechaInicio.getDate() + 97);
+            const ecoMorfoInicio = new Date(fechaInicio); ecoMorfoInicio.setDate(fechaInicio.getDate() + 126);
+            const ecoMorfoFin = new Date(fechaInicio); ecoMorfoFin.setDate(fechaInicio.getDate() + 154);
+            const glucosaInicio = new Date(fechaInicio); glucosaInicio.setDate(fechaInicio.getDate() + 168);
+            const glucosaFin = new Date(fechaInicio); glucosaFin.setDate(fechaInicio.getDate() + 196);
+            
+            document.getElementById('lista-hitos').innerHTML = `
+                <li><strong>Tamizaje Genético (11-13 sem)</strong> ${formatearRango(ecoGenInicio, ecoGenFin)}</li>
+                <li><strong>Ultrasonido Estructural (18-22 sem)</strong> ${formatearRango(ecoMorfoInicio, ecoMorfoFin)}</li>
+                <li><strong>Prueba de Glucosa (24-28 sem)</strong> ${formatearRango(glucosaInicio, glucosaFin)}</li>
+            `;
+
+            // Preparar texto limpio para WhatsApp
+            hitosTextoWhatsApp = `🔹 *Tamizaje Genético:* ${formatearRangoTexto(ecoGenInicio, ecoGenFin)}\n` +
+                                 `🔹 *Eco Estructural:* ${formatearRangoTexto(ecoMorfoInicio, ecoMorfoFin)}\n` +
+                                 `🔹 *Prueba de Glucosa:* ${formatearRangoTexto(glucosaInicio, glucosaFin)}`;
+
+            document.getElementById('barra-visual').style.width = "0%";
+            setTimeout(() => { document.getElementById('barra-visual').style.width = porcentaje + "%"; }, 50);
+            document.getElementById('barra-texto').innerText = `${porcentaje.toFixed(1)}% Completado`;
+            
+            document.getElementById('resultado').style.display = 'block';
+            document.getElementById('resultado-maquina').style.display = 'none';
+        }
+
+        function calcularTimeMachine() {
+            const semanasObj = parseInt(document.getElementById('tm-semanas').value);
+            const diasObj = parseInt(document.getElementById('tm-dias').value) || 0;
+            if (!semanasObj && semanasObj !== 0) return alert("Ingresa semanas.");
+            if(diasObj < 0 || diasObj > 6) return alert("Días 0-6.");
+            if (!fechaInicioGlobal) return alert("Calcula primero.");
+
+            const diasTotalesASumar = (semanasObj * 7) + diasObj;
+            const fechaFutura = new Date(fechaInicioGlobal);
+            fechaFutura.setDate(fechaInicioGlobal.getDate() + diasTotalesASumar);
+
+            const opts = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+            let fechaTexto = fechaFutura.toLocaleDateString('es-ES', opts);
+            fechaTexto = fechaTexto.charAt(0).toUpperCase() + fechaTexto.slice(1);
+
+            const divRes = document.getElementById('resultado-maquina');
+            divRes.style.display = 'block';
+            divRes.innerHTML = `Tendrás ${semanasObj} sem + ${diasObj} días el:<br><span style="color:#2c3e50; font-size:1.3rem;">${fechaTexto}</span>`;
+        }
+
+        function reiniciarCalculadora() {
+            document.getElementById('fum').value = ''; document.getElementById('fpp-eco').value = '';
+            document.getElementById('fecha-eco-prev').value = ''; document.getElementById('eco-sem').value = '';
+            document.getElementById('eco-dias').value = ''; document.getElementById('tm-semanas').value = '';
+            document.getElementById('tm-dias').value = '0';
+            document.getElementById('resultado').style.display = 'none';
+            document.getElementById('resultado-maquina').style.display = 'none';
+            document.getElementById('barra-visual').style.width = "0%";
+            document.getElementById('barra-texto').innerText = "0% Completado";
+            fechaInicioGlobal = null;
+            document.getElementById('tab-fum').checked = true; toggleInput('fum');
+        }
+
+        // --- NUEVO: FUNCIÓN DE WHATSAPP ---
+        function enviarWhatsApp() {
+            if (!fechaInicioGlobal) {
+                alert("Primero debes calcular los datos.");
+                return;
+            }
+
+            // Recopilar los textos de la interfaz
+            const edad = document.getElementById('edad-texto').innerText;
+            const fpp = document.getElementById('fpp-texto').innerText;
+            const progreso = document.getElementById('barra-texto').innerText;
+
+            // Armar el mensaje con formato de WhatsApp (asteriscos para negritas)
+            let mensaje = `🤰 *Resumen Obstétrico*\n\n`;
+            mensaje += `*Edad Gestacional Actual:*\n${edad} (${progreso})\n\n`;
+            mensaje += `*Fecha Probable de Parto (FPP):*\n${fpp}\n\n`;
+            mensaje += `📅 *Cronograma de próximos estudios:*\n${hitosTextoWhatsApp}\n\n`;
+            mensaje += `_Enviado desde OB Wheel Pro_ 🩺`;
+
+            // Codificar el texto para que la URL sea válida (reemplaza espacios y saltos de línea)
+            const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+            
+            // Abrir WhatsApp
+            window.open(url, '_blank');
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('Error PWA', err));
+            });
+        }
+    </script>
+</body>
+</html>
