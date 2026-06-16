@@ -376,42 +376,9 @@
             window.open(url, '_blank');
         }
 
-        <script>
-        // ... (Aquí mantienes todo tu código anterior de la calculadora, calcularEmbarazo, etc) ...
-
-        // --- NUEVO: SISTEMA DE ACTUALIZACIÓN DE PWA ---
-        let refreshing = false;
-
-        // Si el service worker toma el control (porque aceptamos actualizar), recargamos la página
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
-            if (!refreshing) {
-                window.location.reload();
-                refreshing = true;
-            }
-        });
-
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').then(reg => {
-                    console.log('Service Worker registrado con éxito', reg.scope);
-
-                    // Detectar si GitHub tiene un nuevo Service Worker esperando a instalarse
-                    reg.addEventListener('updatefound', () => {
-                        const newWorker = reg.installing;
-                        newWorker.addEventListener('statechange', () => {
-                            // Si el nuevo worker se instaló y ya había uno controlando la app
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                
-                                // Mostrar alerta nativa al usuario
-                                if (confirm('¡Hay una nueva versión de la Calculadora Obstétrica disponible! ¿Deseas actualizar ahora?')) {
-                                    // Enviar el mensaje para activar la nueva versión
-                                    newWorker.postMessage('SKIP_WAITING');
-                                }
-                                
-                            }
-                        });
-                    });
-                }).catch(err => console.log('Error PWA', err));
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log('Error PWA', err));
             });
         }
     </script>
