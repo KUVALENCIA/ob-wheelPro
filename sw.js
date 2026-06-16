@@ -1,6 +1,6 @@
 // IMPORTANTE: Cada vez que subas cambios a GitHub, cambia este nombre
 // Por ejemplo, la próxima vez pon 'ob-wheel-v2', luego 'ob-wheel-v3', etc.
-const CACHE_NAME = 'ob-wheel-v1'; 
+const CACHE_NAME = 'ob-wheel-v4'; 
 
 const urlsToCache = [
   './',
