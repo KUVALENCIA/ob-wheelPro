@@ -153,7 +153,6 @@
                 <h3>Edad Gestacional Actual</h3><p id="edad-texto">0 Semanas + 0 Días</p>
             </div>
 
-            <!-- AQUÍ ESTÁ EL BLOQUE DE CONCEPCIÓN -->
             <div class="dato-clave dato-concepcion">
                 <h3>Fecha Probable de Concepción</h3>
                 <p id="concepcion-texto">--/--/----</p>
@@ -162,8 +161,7 @@
             <div class="dato-clave dato-hitos">
                 <h3>📅 Cronograma de Estudios</h3>
                 <ul id="lista-hitos" class="hitos-list">
-                    <!-- Se llena con JS -->
-                </ul>
+                    </ul>
             </div>
 
             <div class="time-machine-container no-print">
@@ -276,9 +274,7 @@
             const diasRestantes = diasTotales % 7;
 
             // 2. LÓGICA DE LA FECHA PROBABLE DE CONCEPCIÓN
-            // Creamos un nuevo objeto de fecha basado en la fecha de inicio
             const fechaConcepcion = new Date(fechaInicio);
-            // Le sumamos 14 días exactos
             fechaConcepcion.setDate(fechaInicio.getDate() + 14);
 
             let porcentaje = (diasTotales / 280) * 100;
@@ -291,7 +287,6 @@
             document.getElementById('metodo-usado-print').innerText = textoMetodo;
             document.getElementById('fpp-texto').innerText = fppCalculada.toLocaleDateString('es-ES', opts);
             document.getElementById('edad-texto').innerText = `${semanas} Semanas + ${diasRestantes} Días`;
-            // Inyectamos la fecha de concepción calculada en la etiqueta <p id="concepcion-texto">
             document.getElementById('concepcion-texto').innerText = fechaConcepcion.toLocaleDateString('es-ES', opts);
             
             // Hitos
@@ -361,7 +356,6 @@
 
             const edad = document.getElementById('edad-texto').innerText;
             const fpp = document.getElementById('fpp-texto').innerText;
-            // También capturamos la fecha de concepción para agregarla al mensaje
             const concepcion = document.getElementById('concepcion-texto').innerText;
             const progreso = document.getElementById('barra-texto').innerText;
 
@@ -376,9 +370,39 @@
             window.open(url, '_blank');
         }
 
+        // --- NUEVO: SISTEMA DE ACTUALIZACIÓN DE PWA ---
+        let refreshing = false;
+
+        // Si el service worker toma el control (porque aceptamos actualizar), recargamos la página
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                window.location.reload();
+                refreshing = true;
+            }
+        });
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log('Error PWA', err));
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    console.log('Service Worker registrado con éxito', reg.scope);
+
+                    // Detectar si GitHub tiene un nuevo Service Worker esperando a instalarse
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            // Si el nuevo worker se instaló y ya había uno controlando la app
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                
+                                // Mostrar alerta nativa al usuario
+                                if (confirm('¡Hay una nueva versión de la Calculadora Obstétrica disponible! ¿Deseas actualizar ahora?')) {
+                                    // Enviar el mensaje para activar la nueva versión
+                                    newWorker.postMessage('SKIP_WAITING');
+                                }
+                                
+                            }
+                        });
+                    });
+                }).catch(err => console.log('Error PWA', err));
             });
         }
     </script>
