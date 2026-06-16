@@ -51,6 +51,9 @@
         
         .dato-clave { background-color: var(--bg-clave); padding: 15px; border-radius: 10px; margin-bottom: 10px; border-left: 5px solid #3498db; }
         .dato-fpp { border-left-color: #e74c3c; } .dato-eco { border-left-color: #9b59b6; } .dato-hitos { border-left-color: #f39c12; } .dato-machine { border-left-color: #27ae60; }
+        /* Añadimos un color amarillo mostaza sutil para destacar la concepción */
+        .dato-concepcion { border-left-color: #f1c40f; } 
+        
         .dato-clave h3 { margin: 0; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; }
         .dato-clave p { margin: 5px 0 0 0; font-size: 1.2rem; color: var(--text-main); font-weight: bold; }
         
@@ -71,7 +74,6 @@
         .btn-mini { background-color: #27ae60; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-left: auto; }
         .machine-result { margin-top: 15px; font-size: 1.1rem; color: #27ae60; font-weight: bold; text-align: center; background: var(--bg-clave); padding: 10px; border-radius: 8px; display: none; }
         
-        /* BOTONES DE COMPARTIR E IMPRIMIR */
         .share-buttons { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
         .btn-print { flex: 1; background-color: #95a5a6; color: white; border: none; padding: 12px 10px; font-size: 1rem; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 140px; }
         .btn-whatsapp { flex: 1; background-color: #25D366; color: white; border: none; padding: 12px 10px; font-size: 1rem; border-radius: 8px; cursor: pointer; font-weight: bold; min-width: 140px; }
@@ -151,10 +153,17 @@
                 <h3>Edad Gestacional Actual</h3><p id="edad-texto">0 Semanas + 0 Días</p>
             </div>
 
+            <!-- AQUÍ ESTÁ EL BLOQUE DE CONCEPCIÓN -->
+            <div class="dato-clave dato-concepcion">
+                <h3>Fecha Probable de Concepción</h3>
+                <p id="concepcion-texto">--/--/----</p>
+            </div>
+
             <div class="dato-clave dato-hitos">
                 <h3>📅 Cronograma de Estudios</h3>
                 <ul id="lista-hitos" class="hitos-list">
-                    </ul>
+                    <!-- Se llena con JS -->
+                </ul>
             </div>
 
             <div class="time-machine-container no-print">
@@ -213,13 +222,11 @@
             return `<span class="rango-fecha">${inicio.toLocaleDateString('es-ES', opts)} al ${fin.toLocaleDateString('es-ES', opts)}</span>`;
         }
         
-        // Formateador sin etiquetas HTML para WhatsApp
         function formatearRangoTexto(inicio, fin) {
             const opts = { day: 'numeric', month: 'short' };
             return `${inicio.toLocaleDateString('es-ES', opts)} al ${fin.toLocaleDateString('es-ES', opts)}`;
         }
 
-        // Variables globales para guardar textos limpios para WhatsApp
         let hitosTextoWhatsApp = "";
 
         function calcularEmbarazo() {
@@ -231,6 +238,7 @@
             let fppCalculada, fechaInicio;
             let textoMetodo = "";
 
+            // 1. DETERMINAR LA FECHA DE INICIO TEÓRICA (FUM)
             if (tabFum) {
                 const inputVal = document.getElementById('fum').value;
                 if (!inputVal) return alert("Ingresa la FUM");
@@ -267,14 +275,24 @@
             const semanas = Math.floor(diasTotales / 7);
             const diasRestantes = diasTotales % 7;
 
+            // 2. LÓGICA DE LA FECHA PROBABLE DE CONCEPCIÓN
+            // Creamos un nuevo objeto de fecha basado en la fecha de inicio
+            const fechaConcepcion = new Date(fechaInicio);
+            // Le sumamos 14 días exactos
+            fechaConcepcion.setDate(fechaInicio.getDate() + 14);
+
             let porcentaje = (diasTotales / 280) * 100;
             if (porcentaje > 100) porcentaje = 100;
             if (porcentaje < 0) porcentaje = 0;
 
             const opts = { day: 'numeric', month: 'long', year: 'numeric' };
+            
+            // 3. INYECTAR DATOS EN EL HTML
             document.getElementById('metodo-usado-print').innerText = textoMetodo;
             document.getElementById('fpp-texto').innerText = fppCalculada.toLocaleDateString('es-ES', opts);
             document.getElementById('edad-texto').innerText = `${semanas} Semanas + ${diasRestantes} Días`;
+            // Inyectamos la fecha de concepción calculada en la etiqueta <p id="concepcion-texto">
+            document.getElementById('concepcion-texto').innerText = fechaConcepcion.toLocaleDateString('es-ES', opts);
             
             // Hitos
             const ecoGenInicio = new Date(fechaInicio); ecoGenInicio.setDate(fechaInicio.getDate() + 77);
@@ -290,7 +308,6 @@
                 <li><strong>Prueba de Glucosa (24-28 sem)</strong> ${formatearRango(glucosaInicio, glucosaFin)}</li>
             `;
 
-            // Preparar texto limpio para WhatsApp
             hitosTextoWhatsApp = `🔹 *Tamizaje Genético:* ${formatearRangoTexto(ecoGenInicio, ecoGenFin)}\n` +
                                  `🔹 *Eco Estructural:* ${formatearRangoTexto(ecoMorfoInicio, ecoMorfoFin)}\n` +
                                  `🔹 *Prueba de Glucosa:* ${formatearRangoTexto(glucosaInicio, glucosaFin)}`;
@@ -336,35 +353,65 @@
             document.getElementById('tab-fum').checked = true; toggleInput('fum');
         }
 
-        // --- NUEVO: FUNCIÓN DE WHATSAPP ---
         function enviarWhatsApp() {
             if (!fechaInicioGlobal) {
                 alert("Primero debes calcular los datos.");
                 return;
             }
 
-            // Recopilar los textos de la interfaz
             const edad = document.getElementById('edad-texto').innerText;
             const fpp = document.getElementById('fpp-texto').innerText;
+            // También capturamos la fecha de concepción para agregarla al mensaje
+            const concepcion = document.getElementById('concepcion-texto').innerText;
             const progreso = document.getElementById('barra-texto').innerText;
 
-            // Armar el mensaje con formato de WhatsApp (asteriscos para negritas)
             let mensaje = `🤰 *Resumen Obstétrico*\n\n`;
             mensaje += `*Edad Gestacional Actual:*\n${edad} (${progreso})\n\n`;
             mensaje += `*Fecha Probable de Parto (FPP):*\n${fpp}\n\n`;
+            mensaje += `*Fecha Probable de Concepción:*\n${concepcion}\n\n`;
             mensaje += `📅 *Cronograma de próximos estudios:*\n${hitosTextoWhatsApp}\n\n`;
             mensaje += `_Enviado desde OB Wheel Pro_ 🩺`;
 
-            // Codificar el texto para que la URL sea válida (reemplaza espacios y saltos de línea)
             const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-            
-            // Abrir WhatsApp
             window.open(url, '_blank');
         }
 
+        <script>
+        // ... (Aquí mantienes todo tu código anterior de la calculadora, calcularEmbarazo, etc) ...
+
+        // --- NUEVO: SISTEMA DE ACTUALIZACIÓN DE PWA ---
+        let refreshing = false;
+
+        // Si el service worker toma el control (porque aceptamos actualizar), recargamos la página
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+                window.location.reload();
+                refreshing = true;
+            }
+        });
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log('Error PWA', err));
+                navigator.serviceWorker.register('./sw.js').then(reg => {
+                    console.log('Service Worker registrado con éxito', reg.scope);
+
+                    // Detectar si GitHub tiene un nuevo Service Worker esperando a instalarse
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            // Si el nuevo worker se instaló y ya había uno controlando la app
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                
+                                // Mostrar alerta nativa al usuario
+                                if (confirm('¡Hay una nueva versión de la Calculadora Obstétrica disponible! ¿Deseas actualizar ahora?')) {
+                                    // Enviar el mensaje para activar la nueva versión
+                                    newWorker.postMessage('SKIP_WAITING');
+                                }
+                                
+                            }
+                        });
+                    });
+                }).catch(err => console.log('Error PWA', err));
             });
         }
     </script>
